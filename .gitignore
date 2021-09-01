@@ -1,0 +1,12 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/XamEasyControl/.vs/XamEasyControl/v16
+/XamEasyControl/XamEasyControl/XamEasyControl.Android/bin/Debug
+/XamEasyControl/XamEasyControl/XamEasyControl.Android/obj
+/XamEasyControl/XamEasyControl/XamEasyControl.iOS/bin/iPhone/Debug
+/XamEasyControl/XamEasyControl/XamEasyControl.iOS/obj
+/XamEasyControl/XamEasyControl/XamEasyControl/bin/Debug/netstandard2.0
+/XamEasyControl/XamEasyControl/XamEasyControl/obj
