@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using Xamarin.Forms;
 
 namespace XamEasyControl
@@ -13,6 +8,13 @@ namespace XamEasyControl
 	public MainPage()
 	{
 	    InitializeComponent();
+
+	    ComboboxControl.Source = new Dictionary<string, string>
+	    {
+		{ "Cat", "Cat" },
+		{ "Dog", "Dog" },
+		{ "Tiger", "Tiger" }
+	    };
 	}
     }
 }
