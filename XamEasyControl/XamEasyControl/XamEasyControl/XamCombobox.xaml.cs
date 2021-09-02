@@ -7,6 +7,7 @@ using XamEasyControl.Models;
 using XamEasyControl.Common;
 using FFImageLoading.Svg.Forms;
 using System.Linq;
+using AiForms.Layouts;
 
 namespace XamEasyControl
 {
@@ -15,9 +16,10 @@ namespace XamEasyControl
     {
 	private static XamCombobox _thisView;
 	private static Frame _mainFrame;
+	private static Frame _placeHolderLine;
 	private static StackLayout _mainStack;
 	private static Label _placeHolder;
-	private static StackLayout _selectedItemStack;
+	private static WrapLayout _selectedItemStack;
 	private static StackLayout _sourceStack;
 
 	public static readonly BindableProperty ModeProperty = BindableProperty.Create(nameof(Mode), typeof(ComboboxSelectionMode), typeof(XamCombobox), ComboboxSelectionMode.Multible);
@@ -35,6 +37,7 @@ namespace XamEasyControl
 	public static readonly BindableProperty SelectedColorProperty = BindableProperty.Create(nameof(SelectedColor), typeof(Color), typeof(XamCombobox), Color.FromHex("#F2F5FB"));
 	public static readonly BindableProperty ExpandIconProperty = BindableProperty.Create(nameof(ExpandIcon), typeof(string), typeof(XamCombobox), "arrow_down.svg", propertyChanged: onExpandIconChanged);
 	public static readonly BindableProperty CloseIconProperty = BindableProperty.Create(nameof(CloseIcon), typeof(string), typeof(XamCombobox), "close.svg", propertyChanged: onCloseIconChanged);
+	public static readonly BindableProperty SeperatorVisibilityProperty = BindableProperty.Create(nameof(SeperatorVisibility), typeof(bool), typeof(XamCombobox), true);
 
 	public XamCombobox()
 	{
@@ -43,7 +46,7 @@ namespace XamEasyControl
 	    // main frame
 	    _mainFrame = new Frame
 	    {
-		Padding = 1,
+		Padding = 0,
 		BorderColor = BorderColor,
 		CornerRadius = Corner,
 		IsClippedToBounds = true,
@@ -56,8 +59,13 @@ namespace XamEasyControl
 	    _mainFrame.Content = _mainStack;
 
 	    // selected item stack
-	    _selectedItemStack = new StackLayout { Orientation = StackOrientation.Horizontal, HorizontalOptions = LayoutOptions.StartAndExpand, Padding = ItemPadding / 2 };
-
+	    _selectedItemStack = new WrapLayout
+	    {
+		Spacing = ItemSpacing,
+		HorizontalOptions = LayoutOptions.FillAndExpand,
+		Margin = ItemPadding / 2
+	    };
+	    
 	    // placeholder
 	    var placeHolderStack = new StackLayout
 	    {
@@ -92,6 +100,19 @@ namespace XamEasyControl
 	    };
 
 	    _mainStack.Children.Add(placeHolderStack);
+
+	    // placeholder line
+	    _placeHolderLine = new Frame
+	    {
+		HeightRequest = 1,
+		HasShadow = false,
+		Padding = 0,
+		BackgroundColor = BorderColor,
+		IsVisible = false,
+		HorizontalOptions = LayoutOptions.FillAndExpand
+	    };
+	    _mainStack.Children.Add(_placeHolderLine);
+
 	    _mainStack.Children.Add(_sourceStack);
 
 	    Content = _mainFrame;
@@ -168,6 +189,12 @@ namespace XamEasyControl
 	{
 	    get { return (string)GetValue(CloseIconProperty); }
 	    set { SetValue(CloseIconProperty, value); }
+	}
+
+	public bool SeperatorVisibility
+	{
+	    get { return (bool)GetValue(SeperatorVisibilityProperty); }
+	    set { SetValue(SeperatorVisibilityProperty, value); }
 	}
 
 	public Dictionary<string, string> Source
@@ -248,6 +275,8 @@ namespace XamEasyControl
 	private void OnFocus_Tapped(object sender, EventArgs e)
 	{
 	    _sourceStack.IsVisible = !_sourceStack.IsVisible;
+
+	    _placeHolderLine.IsVisible = _sourceStack.IsVisible;
 	}
 
 	private static void OnItemSelected_Tapped(object sender, EventArgs e)
@@ -255,27 +284,54 @@ namespace XamEasyControl
 	    var view = sender as StackLayout;
 	    string key = (e as TappedEventArgs).Parameter as string;
 
-	    if (!_thisView.SelectedItems.IsNullOrEmpty() && _thisView.SelectedItems.ContainsKey(key))
+	    if (_thisView.Mode == ComboboxSelectionMode.Multible)
 	    {
-		view.BackgroundColor = Color.White;
-		_thisView.SelectedItems.Remove(key);
-
-		var removeItem = _selectedItemStack.Children.FirstOrDefault(p => (((p as Frame).Content as StackLayout).Children[0] as Label).Text.Equals(key));
-		if (removeItem != null)
+		if (!_thisView.SelectedItems.IsNullOrEmpty() && _thisView.SelectedItems.ContainsKey(key))
 		{
-		    _selectedItemStack.Children.Remove(removeItem);
+		    view.BackgroundColor = Color.White;
+		    _thisView.SelectedItems.Remove(key);
+
+		    var removeItem = _selectedItemStack.Children.FirstOrDefault(p => (((p as Frame).Content as StackLayout).Children[0] as Label).Text.Equals(key));
+		    if (removeItem != null)
+		    {
+			_selectedItemStack.Children.Remove(removeItem);
+		    }
 		}
+		else
+		{
+		    view.BackgroundColor = _thisView.SelectedColor;
+		    _thisView.SelectedItems.Add(key, _thisView.Source[key]);
+
+		    _selectedItemStack.Children.Add(CreateTagItem(key));
+		}
+
+
+		// update ui on selected stack
+		_placeHolder.IsVisible = _thisView.SelectedItems.IsNullOrEmpty();
 	    }
 	    else
 	    {
-		view.BackgroundColor = _thisView.SelectedColor;
-		_thisView.SelectedItems.Add(key, _thisView.Source[key]);
+		_thisView.SelectedItems = new Dictionary<string, string>
+		{
+		    { key, _thisView.Source[key] }
+		};
 
-		_selectedItemStack.Children.Add(CreateTagItem(key));
+		// 1. update selected color source list
+		foreach (StackLayout item in _sourceStack.Children)
+		{
+		    if ((item.Children[0] as Label).Text.Equals(key))
+		    {
+			item.BackgroundColor = _thisView.SelectedColor;
+		    }
+		    else
+		    {
+			item.BackgroundColor = Color.White;
+		    }
+		}
+
+		// 2. Update seletced item tag
+		_placeHolder.Text = key;
 	    }
-
-	    // update ui on selected stack
-	    _placeHolder.IsVisible = _thisView.SelectedItems.IsNullOrEmpty();
 	}
 
 	private static void OnDeleteItemSelected_Tapped(object sender, EventArgs e)
@@ -287,9 +343,9 @@ namespace XamEasyControl
 	    _selectedItemStack.Children.Remove(((sender as SvgCachedImage).Parent as StackLayout).Parent as Frame);
 
 	    // 2: reload source item color
-	    foreach(StackLayout item in _sourceStack.Children)
+	    foreach (StackLayout item in _sourceStack.Children)
 	    {
-		if ((item.Children[1] as Label).Text.Equals(key))
+		if ((item.Children[0] as Label).Text.Equals(key))
 		{
 		    item.BackgroundColor = Color.White;
 		}
@@ -306,20 +362,13 @@ namespace XamEasyControl
 	    };
 	    itemSelected.Tapped += OnItemSelected_Tapped;
 
-	    var stack = new StackLayout 
-	    { 
+	    var stack = new StackLayout
+	    {
 		Spacing = 0,
 		BackgroundColor = _thisView.SelectedItems.ContainsKey(key) ? _thisView.SelectedColor : Color.White
 	    };
 
 	    stack.GestureRecognizers.Add(itemSelected);
-
-	    stack.Children.Add(new Frame
-	    {
-		Padding = 0,
-		HeightRequest = 1,
-		BackgroundColor = _thisView.BorderColor
-	    });
 
 	    stack.Children.Add(new Label
 	    {
@@ -329,6 +378,14 @@ namespace XamEasyControl
 		VerticalTextAlignment = TextAlignment.Center,
 		FontSize = _thisView.FontSize,
 		TextColor = _thisView.TextColor
+	    });
+
+	    stack.Children.Add(new Frame
+	    {
+		IsVisible = _thisView.SeperatorVisibility,
+		Padding = 0,
+		HeightRequest = 1,
+		BackgroundColor = _thisView.BorderColor
 	    });
 
 	    return stack;
@@ -361,11 +418,12 @@ namespace XamEasyControl
 
 	    return new Frame
 	    {
-		HasShadow = false,
 		Padding = _thisView.ItemPadding,
 		CornerRadius = _thisView.Corner,
 		BackgroundColor = _thisView.SelectedColor,
 		VerticalOptions = LayoutOptions.CenterAndExpand,
+		IsClippedToBounds = true,
+		HasShadow = false,
 		Content = content
 	    };
 	}

@@ -13,7 +13,12 @@ namespace XamEasyControl
 	    {
 		{ "Cat", "Cat" },
 		{ "Dog", "Dog" },
-		{ "Tiger", "Tiger" }
+		{ "Tiger", "Tiger" },
+		{ "Fish", "Fish" },
+		{ "MainPage", "MainPage" },
+		{ "Dictionary", "Dictionary" },
+		{ "Generic", "Generic" },
+		{ "Xamarin", "Xamarin" }
 	    };
 	}
     }

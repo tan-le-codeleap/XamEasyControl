@@ -9,12 +9,14 @@
 		<xameasycontrol:XamCombobox
 			x:Name="ComboboxControl"
 			BorderColor="LightGray"
-			Corner="4"
+			Corner="6"
 			FontSize="20"
 			ItemPadding="8"
 			ItemSpacing="4"
+			Mode="Multible"
 			PlaceHolderText="Select here"
 			SelectedColor="LightBlue"
+			SeperatorVisibility="True"
 			TextColor="Black" />
 	</StackLayout>
 </ContentPage>
