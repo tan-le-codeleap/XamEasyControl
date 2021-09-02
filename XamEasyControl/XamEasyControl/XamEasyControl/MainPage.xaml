@@ -8,13 +8,13 @@
 	<StackLayout Padding="8">
 		<xameasycontrol:XamCombobox
 			x:Name="ComboboxControl"
-			BorderColor="Red"
-			Corner="8"
+			BorderColor="LightGray"
+			Corner="4"
 			FontSize="20"
-			ItemPadding="4"
+			ItemPadding="8"
 			ItemSpacing="4"
 			PlaceHolderText="Select here"
-			SelectedColor="Orange"
-			TextColor="Red" />
+			SelectedColor="LightBlue"
+			TextColor="Black" />
 	</StackLayout>
 </ContentPage>

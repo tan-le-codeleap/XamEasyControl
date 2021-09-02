@@ -2,11 +2,9 @@
 <ContentView
 	x:Class="XamEasyControl.XamCombobox"
 	xmlns="http://xamarin.com/schemas/2014/forms"
-	xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-	xmlns:controls="clr-namespace:AiForms.Layouts;assembly=AiForms.Layouts"
-	xmlns:forms="clr-namespace:FFImageLoading.Svg.Forms;assembly=FFImageLoading.Svg.Forms">
+	xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-	<StackLayout Spacing="0">
+	<!--<StackLayout Spacing="0">
 		<Frame
 			x:Name="BorderFrame"
 			Padding="4"
@@ -113,6 +111,7 @@
 									HeightRequest="1"
 									HorizontalOptions="FillAndExpand" />
 								<Label
+									x:Name="DisplayItemLbl"
 									Margin="12"
 									HorizontalOptions="StartAndExpand"
 									LineBreakMode="TailTruncation"
@@ -124,5 +123,5 @@
 				</StackLayout>
 			</Grid>
 		</Frame>
-	</StackLayout>
+	</StackLayout>-->
 </ContentView>
