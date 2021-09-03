@@ -1,18 +1,16 @@
-﻿using System;
+﻿using AiForms.Layouts;
+using FFImageLoading.Svg.Forms;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Input;
 using Xamarin.Forms;
-using Xamarin.Forms.Xaml;
-using XamEasyControl.Models;
 using XamEasyControl.Common;
-using FFImageLoading.Svg.Forms;
-using System.Linq;
-using AiForms.Layouts;
+using XamEasyControl.Models;
 
 namespace XamEasyControl
 {
-    [XamlCompilation(XamlCompilationOptions.Compile)]
-    public partial class XamCombobox : ContentView
+    public class XamCombobox : ContentView
     {
 	private static XamCombobox _thisView;
 	private static Frame _mainFrame;
@@ -21,6 +19,7 @@ namespace XamEasyControl
 	private static Label _placeHolder;
 	private static WrapLayout _selectedItemStack;
 	private static StackLayout _sourceStack;
+	private static SvgCachedImage _expandIcon;
 
 	public static readonly BindableProperty ModeProperty = BindableProperty.Create(nameof(Mode), typeof(ComboboxSelectionMode), typeof(XamCombobox), ComboboxSelectionMode.Multible);
 	public static readonly BindableProperty SourceProperty = BindableProperty.Create(nameof(Source), typeof(Dictionary<string, string>), typeof(XamCombobox), null, propertyChanged: OnSourceChanged);
@@ -35,14 +34,12 @@ namespace XamEasyControl
 	public static readonly BindableProperty TextColorProperty = BindableProperty.Create(nameof(TextColor), typeof(Color), typeof(XamCombobox), Color.LightGray, propertyChanged: OnTextColorChanged);
 	public static readonly BindableProperty BorderColorProperty = BindableProperty.Create(nameof(BorderColor), typeof(Color), typeof(XamCombobox), Color.LightGray, propertyChanged: OnBorderColorChanged);
 	public static readonly BindableProperty SelectedColorProperty = BindableProperty.Create(nameof(SelectedColor), typeof(Color), typeof(XamCombobox), Color.FromHex("#F2F5FB"));
-	public static readonly BindableProperty ExpandIconProperty = BindableProperty.Create(nameof(ExpandIcon), typeof(string), typeof(XamCombobox), "arrow_down.svg", propertyChanged: onExpandIconChanged);
-	public static readonly BindableProperty CloseIconProperty = BindableProperty.Create(nameof(CloseIcon), typeof(string), typeof(XamCombobox), "close.svg", propertyChanged: onCloseIconChanged);
+	public static readonly BindableProperty ExpandIconProperty = BindableProperty.Create(nameof(ExpandIcon), typeof(string), typeof(XamCombobox), "arrow_down.svg", propertyChanged: OnExpandIconChanged);
+	public static readonly BindableProperty CloseIconProperty = BindableProperty.Create(nameof(CloseIcon), typeof(string), typeof(XamCombobox), "close.svg");
 	public static readonly BindableProperty SeperatorVisibilityProperty = BindableProperty.Create(nameof(SeperatorVisibility), typeof(bool), typeof(XamCombobox), true);
 
 	public XamCombobox()
 	{
-	    InitializeComponent();
-
 	    // main frame
 	    _mainFrame = new Frame
 	    {
@@ -52,56 +49,56 @@ namespace XamEasyControl
 		IsClippedToBounds = true,
 		HasShadow = false
 	    };
-	    var mainFrameFocus = new TapGestureRecognizer();
-	    mainFrameFocus.Tapped += OnFocus_Tapped;
-	    _mainStack = new StackLayout { Spacing = 0 };
-	    _mainStack.GestureRecognizers.Add(mainFrameFocus);
-	    _mainFrame.Content = _mainStack;
 
-	    // selected item stack
-	    _selectedItemStack = new WrapLayout
-	    {
-		Spacing = ItemSpacing,
-		HorizontalOptions = LayoutOptions.FillAndExpand,
-		Margin = ItemPadding / 2
-	    };
-	    
-	    // placeholder
-	    var placeHolderStack = new StackLayout
-	    {
-		Orientation = StackOrientation.Horizontal
-	    };
 	    _placeHolder = new Label
 	    {
-		HorizontalOptions = LayoutOptions.StartAndExpand,
 		Margin = ItemPadding * 1.5,
 		Text = PlaceHolderText,
 		FontSize = FontSize,
+		HorizontalOptions = LayoutOptions.StartAndExpand,
 		TextColor = TextColor
 	    };
 
+	    _selectedItemStack = new WrapLayout
+	    {
+		IsVisible = false,
+		Spacing = ItemSpacing,
+		Margin = ItemPadding / 2
+	    };
+
+	    var focusTapped = new TapGestureRecognizer();
+	    focusTapped.Tapped += OnFocus_Tapped;
+	    var placeHolderStack = new StackLayout();
+	    placeHolderStack.GestureRecognizers.Add(focusTapped);
 	    placeHolderStack.Children.Add(_placeHolder);
 	    placeHolderStack.Children.Add(_selectedItemStack);
-	    placeHolderStack.Children.Add(new SvgCachedImage
+
+	    var placeHolderGrib = new Grid
+	    {
+		RowDefinitions =
+		{
+		    new RowDefinition { Height = GridLength.Auto },
+		},
+		ColumnDefinitions =
+		{
+		    new ColumnDefinition { Width = GridLength.Star },
+		    new ColumnDefinition { Width = 25 },
+		}
+	    };
+	    placeHolderGrib.Children.Add(placeHolderStack, 0, 0);
+
+	    _expandIcon = new SvgCachedImage
 	    {
 		Source = ExpandIcon,
 		Aspect = Aspect.AspectFit,
 		HeightRequest = 15,
+		HorizontalOptions = LayoutOptions.CenterAndExpand,
 		WidthRequest = 20,
 		Margin = new Thickness(4, 0, 4, 0),
-		VerticalOptions = LayoutOptions.CenterAndExpand
-	    });
-
-	    // source stack
-	    _sourceStack = new StackLayout
-	    {
-		IsVisible = false,
-		Spacing = 0
 	    };
+	    _expandIcon.GestureRecognizers.Add(focusTapped);
+	    placeHolderGrib.Children.Add(_expandIcon, 1, 0);
 
-	    _mainStack.Children.Add(placeHolderStack);
-
-	    // placeholder line
 	    _placeHolderLine = new Frame
 	    {
 		HeightRequest = 1,
@@ -109,12 +106,21 @@ namespace XamEasyControl
 		Padding = 0,
 		BackgroundColor = BorderColor,
 		IsVisible = false,
-		HorizontalOptions = LayoutOptions.FillAndExpand
 	    };
-	    _mainStack.Children.Add(_placeHolderLine);
 
+	    _sourceStack = new StackLayout
+	    {
+		IsVisible = false,
+		Spacing = 0
+	    };
+
+	    _mainStack = new StackLayout { Spacing = 0 };
+
+	    _mainStack.Children.Add(placeHolderGrib);
+	    _mainStack.Children.Add(_placeHolderLine);
 	    _mainStack.Children.Add(_sourceStack);
 
+	    _mainFrame.Content = _mainStack;
 	    Content = _mainFrame;
 	}
 
@@ -211,6 +217,11 @@ namespace XamEasyControl
 	#endregion
 
 	#region binding event
+	private static void OnExpandIconChanged(BindableObject bindable, object oldValue, object newValue)
+	{
+	    _expandIcon.Source = (string)newValue;
+	}
+
 	private static void OnItemPaddingChanged(BindableObject bindable, object oldValue, object newValue)
 	{
 	    _selectedItemStack.Padding = (int)newValue;
@@ -241,14 +252,6 @@ namespace XamEasyControl
 	    _mainFrame.BorderColor = (Color)newValue;
 	}
 
-	private static void onCloseIconChanged(BindableObject bindable, object oldValue, object newValue)
-	{
-	}
-
-	private static void onExpandIconChanged(BindableObject bindable, object oldValue, object newValue)
-	{
-	}
-
 	private static void OnPlaceHolderTextChanged(BindableObject bindable, object oldValue, object newValue)
 	{
 	    _placeHolder.Text = (string)newValue;
@@ -274,9 +277,11 @@ namespace XamEasyControl
 
 	private void OnFocus_Tapped(object sender, EventArgs e)
 	{
-	    _sourceStack.IsVisible = !_sourceStack.IsVisible;
-
-	    _placeHolderLine.IsVisible = _sourceStack.IsVisible;
+	    Device.BeginInvokeOnMainThread(() =>
+	    {
+		_sourceStack.IsVisible = !_sourceStack.IsVisible;
+		_placeHolderLine.IsVisible = _sourceStack.IsVisible;
+	    });
 	}
 
 	private static void OnItemSelected_Tapped(object sender, EventArgs e)
@@ -305,9 +310,12 @@ namespace XamEasyControl
 		    _selectedItemStack.Children.Add(CreateTagItem(key));
 		}
 
-
 		// update ui on selected stack
-		_placeHolder.IsVisible = _thisView.SelectedItems.IsNullOrEmpty();
+		Device.BeginInvokeOnMainThread(() =>
+		{
+		    _placeHolder.IsVisible = _thisView.SelectedItems.IsNullOrEmpty();
+		    _selectedItemStack.IsVisible = !_thisView.SelectedItems.IsNullOrEmpty();
+		});
 	    }
 	    else
 	    {
@@ -351,7 +359,11 @@ namespace XamEasyControl
 		}
 	    }
 
-	    _placeHolder.IsVisible = _thisView.SelectedItems.IsNullOrEmpty();
+	    Device.BeginInvokeOnMainThread(() =>
+	    {
+		_selectedItemStack.IsVisible = !_thisView.SelectedItems.IsNullOrEmpty();
+		_placeHolder.IsVisible = _thisView.SelectedItems.IsNullOrEmpty();
+	    });
 	}
 
 	private static StackLayout CreateSourceItem(string key)
